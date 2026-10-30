@@ -1,0 +1,49 @@
+{
+  "name": "react-credly-badges",
+  "version": "0.1.0",
+  "description": "A lightweight React component for displaying public Credly badges through a Cloudflare Worker.",
+  "type": "module",
+  "main": "./dist/client/index.cjs",
+  "module": "./dist/client/index.js",
+  "types": "./dist/client/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/client/index.d.ts",
+        "default": "./dist/client/index.js"
+      },
+      "require": {
+        "types": "./dist/client/index.d.cts",
+        "default": "./dist/client/index.cjs"
+      }
+    }
+  },
+  "files": ["dist"],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "prepack": "npm run typecheck && npm run lint && npm run build"
+  },
+  "peerDependencies": {
+    "react": "^17.0.0 || ^18.2.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.0",
+    "@types/react": "^19.0.0",
+    "eslint": "^10.0.0",
+    "eslint-plugin-react-hooks": "^7.0.0",
+    "globals": "^16.0.0",
+    "react": "^19.0.0",
+    "tsup": "^9.0.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.0.0"
+  },
+  "keywords": ["react", "credly", "badges", "typescript"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Safnaj/react-credly-badges.git"
+  }
+}
