@@ -3,6 +3,38 @@ export interface CredlyBadge {
   name: string;
   imageUrl: string;
   url: string;
+  issuerName?: string | null;
+  issuedAt?: string | null;
+}
+
+export function groupBadgesByIssuer(badges: CredlyBadge[]) {
+  const groups = new Map<string, { issuer: string; badges: CredlyBadge[] }>();
+
+  for (const badge of badges) {
+    const issuer = badge.issuerName ?? 'Unknown issuer';
+    const group = groups.get(issuer);
+    if (group) {
+      group.badges.push(badge);
+    } else {
+      groups.set(issuer, { issuer, badges: [badge] });
+    }
+  }
+
+  return Array.from(groups.values(), (group) => ({
+    ...group,
+    badges: group.badges
+      .map((badge, index) => ({ badge, index }))
+      .sort((a, b) => {
+        const aDate = a.badge.issuedAt ? Date.parse(a.badge.issuedAt) : null;
+        const bDate = b.badge.issuedAt ? Date.parse(b.badge.issuedAt) : null;
+
+        if (aDate === null && bDate === null) return a.index - b.index;
+        if (aDate === null) return 1;
+        if (bDate === null) return -1;
+        return bDate - aDate || a.index - b.index;
+      })
+      .map(({ badge }) => badge),
+  }));
 }
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
@@ -51,6 +83,14 @@ export function parseBadges(value: unknown): CredlyBadge[] {
       name: badge.name,
       imageUrl: badge.imageUrl,
       url,
+      issuerName: isNonEmptyString(badge.issuerName)
+        ? badge.issuerName.trim()
+        : null,
+      issuedAt:
+        isNonEmptyString(badge.issuedAt) &&
+        !Number.isNaN(Date.parse(badge.issuedAt))
+          ? badge.issuedAt
+          : null,
     };
   });
 }

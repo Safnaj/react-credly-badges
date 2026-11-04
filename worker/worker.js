@@ -5,11 +5,11 @@
 // metadata only, no image bytes are fetched, stored or served.
 
 const UPSTREAM = "https://www.credly.com/users";
-const USERNAME_RE = /^[a-z0-9][a-z0-9-]{0,59}$/i;
+const USERNAME_REGEX = /^[a-z0-9][a-z0-9-]{0,59}$/i;
 const USER_AGENT = "react-credly-badges (unofficial; metadata only)";
 
-const FRESH_TTL = 6 * 60 * 60; // 6 hours: serve from cache without calling Credly
-const STALE_TTL = 7 * 24 * 60 * 60; // 7 days: fallback copy if Credly fails
+const FRESH_TTL = 6 * 60 * 60;
+const STALE_TTL = 7 * 24 * 60 * 60;
 const TIMEOUT_MS = 8000;
 
 const CORS = {
@@ -19,8 +19,7 @@ const CORS = {
   "access-control-max-age": "86400",
 };
 
-// CORS headers are added to EVERY response, including errors. Otherwise the
-// browser reports a confusing CORS failure instead of the real error.
+// Include CORS on errors so browsers can read the failure response.
 function json(body, status = 200, cacheControl = "no-store", extra = {}) {
   return new Response(JSON.stringify(body), {
     status,
@@ -35,12 +34,6 @@ function json(body, status = 200, cacheControl = "no-store", extra = {}) {
 }
 
 const error = (status, code) => json({ error: code }, status);
-
-// ---------------------------------------------------------------------------
-// Normalizer. This is the ONLY place that knows Credly's response shape.
-// When Credly changes its format, this is the one function to fix.
-// It is written defensively: missing fields never throw, bad items are skipped.
-// ---------------------------------------------------------------------------
 
 function safeHttps(value) {
   if (typeof value !== "string") return null;
@@ -94,11 +87,6 @@ export function normalize(raw) {
   return list.map(toBadge).filter(Boolean);
 }
 
-// ---------------------------------------------------------------------------
-// Cache helpers (Cloudflare Cache API). Silently disabled where `caches` is
-// unavailable (e.g. plain Node tests).
-// ---------------------------------------------------------------------------
-
 const getCache = () => globalThis.caches?.default ?? null;
 const freshKey = (u) =>
   new Request(`https://cache.credly-proxy.internal/v1/fresh/${u}`);
@@ -120,10 +108,6 @@ function cachePut(ctx, key, response) {
   ctx?.waitUntil?.(task);
 }
 
-// ---------------------------------------------------------------------------
-// Request handler
-// ---------------------------------------------------------------------------
-
 export async function handleRequest(request, env, ctx) {
   if (request.method === "OPTIONS")
     return new Response(null, { status: 204, headers: CORS });
@@ -132,22 +116,11 @@ export async function handleRequest(request, env, ctx) {
   const raw = new URL(request.url).searchParams.get("username") ?? "";
   const username = raw.trim().toLowerCase();
 
-  // Strict allowlist pattern: never accept URLs or paths (prevents SSRF / open proxy).
-  if (!USERNAME_RE.test(username)) return error(400, "INVALID_USERNAME");
+  if (!USERNAME_REGEX.test(username)) return error(400, "INVALID_USERNAME");
 
-  // Optional: restrict to specific profiles with a Worker variable
-  // ALLOWED_USERNAMES="ahamed-safnaj,another-user"
-  const allowed = env?.ALLOWED_USERNAMES;
-  if (allowed) {
-    const list = allowed.split(",").map((s) => s.trim().toLowerCase());
-    if (!list.includes(username)) return error(403, "USERNAME_NOT_ALLOWED");
-  }
-
-  // 1) Fresh cache hit: Credly is not contacted at all.
   const fresh = await cacheGet(freshKey(username));
   if (fresh) return withHeader(fresh, "x-cache", "HIT");
 
-  // 2) Ask Credly.
   let upstream;
   try {
     upstream = await fetch(
@@ -162,7 +135,7 @@ export async function handleRequest(request, env, ctx) {
   }
 
   if (upstream.status === 404) return error(404, "PROFILE_NOT_FOUND");
-  // No retries on 403/429: back off and serve stale data instead.
+  // Avoid retries on upstream errors to respect rate limits.
   if (!upstream.ok)
     return serveStaleOr(username, 502, `UPSTREAM_${upstream.status}`);
 
@@ -216,7 +189,7 @@ export default {
     try {
       return await handleRequest(request, env, ctx);
     } catch {
-      return error(500, "INTERNAL_ERROR"); // never leak internals, never crash
+      return error(500, "INTERNAL_ERROR");
     }
   },
 };
