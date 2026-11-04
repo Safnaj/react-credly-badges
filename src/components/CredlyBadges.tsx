@@ -1,11 +1,13 @@
-import * as React from "react";
+import React, { useEffect } from "react";
 import type { CSSProperties } from "react";
-import { parseBadges } from "../shared/badges";
+import { groupBadgesByIssuer, parseBadges } from "../shared/badges";
 import type { CredlyBadge } from "../shared/badges";
+import { BadgeItem } from "./BadgeItem";
 
 export interface CredlyBadgesProps {
   username: string;
   direction?: "horizontal" | "vertical";
+  groupBy?: "issuer";
   endpoint?: string;
   className?: string;
   style?: CSSProperties;
@@ -19,6 +21,7 @@ type BadgeState =
 export function CredlyBadges({
   username,
   direction = "horizontal",
+  groupBy,
   endpoint = "https://react-credly-badges.safnaj99.workers.dev/",
   className,
   style,
@@ -29,7 +32,7 @@ export function CredlyBadges({
     status: "loading",
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     const controller = new AbortController();
     let active = true;
     setState({ key, status: "loading" });
@@ -81,6 +84,10 @@ export function CredlyBadges({
   // Hide results from the previous profile before the next effect runs.
   const current: BadgeState =
     state.key === key ? state : { key, status: "loading" };
+  const groupedBadges =
+    current.status === "success" && groupBy === "issuer"
+      ? groupBadgesByIssuer(current.badges)
+      : [];
 
   return (
     <div className={className} style={style}>
@@ -104,20 +111,32 @@ export function CredlyBadges({
               padding: 0,
             }}
           >
-            {current.badges.map((badge) => (
-              <li key={badge.id}>
-                <a href={badge.url} target='_blank' rel='noopener noreferrer'>
-                  <img
-                    src={badge.imageUrl}
-                    alt={badge.name}
-                    width={120}
-                    height={120}
-                    loading='lazy'
-                    style={{ objectFit: "contain" }}
-                  />
-                </a>
-              </li>
-            ))}
+            {groupBy === "issuer"
+              ? groupedBadges.map(({ issuer, badges }) => (
+                  <li key={issuer}>
+                    <h2>{issuer}</h2>
+                    <ul
+                      aria-label={`Credly badges from ${issuer}`}
+                      style={{
+                        display: "flex",
+                        flexDirection:
+                          direction === "vertical" ? "column" : "row",
+                        flexWrap: direction === "vertical" ? "nowrap" : "wrap",
+                        gap: "1rem",
+                        listStyle: "none",
+                        margin: 0,
+                        padding: 0,
+                      }}
+                    >
+                      {badges.map((badge) => (
+                        <BadgeItem key={badge.id} badge={badge} />
+                      ))}
+                    </ul>
+                  </li>
+                ))
+              : current.badges.map((badge) => (
+                  <BadgeItem key={badge.id} badge={badge} />
+                ))}
           </ul>
         ))}
     </div>
