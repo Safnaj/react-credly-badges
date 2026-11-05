@@ -2,7 +2,7 @@
 
 A lightweight React + TypeScript component for displaying public Credly badges.
 Supports React 17, 18.2, and 19, with horizontal or vertical layouts and optional
-grouping by issuer. Badge images link to their Credly verification pages.
+sorting by issuer. Badge images link to their Credly verification pages.
 
 ## Setup
 
@@ -28,22 +28,25 @@ component.
 
 ### Options
 
-| Prop        | Description                                              | Default                  |
-| ----------- | -------------------------------------------------------- | ------------------------ |
-| `username`  | Credly profile username (required).                      | -                        |
-| `direction` | `"horizontal"` or `"vertical"`.                          | `"horizontal"`           |
-| `groupBy`   | Set to `"issuer"` to group badges under issuer headings. | No grouping              |
-| `endpoint`  | URL of a compatible proxy, if self-hosting.              | Hosted Cloudflare Worker |
-| `className` | CSS class for the outer container.                       | -                        |
-| `style`     | Inline styles for the outer container.                   | -                        |
+| Prop        | Description                                                      | Default                  |
+| ----------- | ---------------------------------------------------------------- | ------------------------ |
+| `username`  | Credly profile username (required).                              | -                        |
+| `direction` | `"horizontal"` or `"vertical"`.                                  | `"horizontal"`           |
+| `sortBy`    | Set to `"issuer"` to place badges from the same issuer together. | Endpoint order           |
+| `endpoint`  | URL of a compatible proxy, if self-hosting.                      | Hosted Cloudflare Worker |
+| `className` | CSS class for the outer container.                               | -                        |
+| `style`     | Inline styles for the outer container.                           | -                        |
+
+### Usage
 
 ```tsx
-<CredlyBadges username='ahamed-safnaj' direction='vertical' groupBy='issuer' />
+<CredlyBadges username='ahamed-safnaj' direction='vertical' sortBy='issuer' />
 ```
 
-Without grouping, badges retain the endpoint's order. Issuer groups follow their
-first appearance in the response; badges within each group are sorted newest
-first, with undated badges last. Missing issuers appear under "Unknown issuer".
+Without `sortBy`, badges retain the endpoint's order. With `sortBy="issuer"`,
+badges remain in one flat list without headings. Issuers follow their first
+appearance in the response, with badges from each issuer sorted newest first
+and undated badges last. Badges without issuer metadata are kept together too.
 
 ## How the proxy works
 
@@ -73,7 +76,7 @@ npm run build
 ```
 
 Use [Conventional Commits](https://www.conventionalcommits.org/), such as
-`feat: group badges by issuer`, `fix: handle empty responses`, or
+`feat: sort badges by issuer`, `fix: handle empty responses`, or
 `docs: update setup instructions`. Commit messages and PR titles are checked
 in CI.
 
