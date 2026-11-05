@@ -7,22 +7,21 @@ export interface CredlyBadge {
   issuedAt?: string | null;
 }
 
-export function groupBadgesByIssuer(badges: CredlyBadge[]) {
-  const groups = new Map<string, { issuer: string; badges: CredlyBadge[] }>();
+export function sortBadgesByIssuer(badges: CredlyBadge[]): CredlyBadge[] {
+  const issuers = new Map<string | null, CredlyBadge[]>();
 
   for (const badge of badges) {
-    const issuer = badge.issuerName ?? 'Unknown issuer';
-    const group = groups.get(issuer);
-    if (group) {
-      group.badges.push(badge);
+    const issuer = badge.issuerName ?? null;
+    const issuerBadges = issuers.get(issuer);
+    if (issuerBadges) {
+      issuerBadges.push(badge);
     } else {
-      groups.set(issuer, { issuer, badges: [badge] });
+      issuers.set(issuer, [badge]);
     }
   }
 
-  return Array.from(groups.values(), (group) => ({
-    ...group,
-    badges: group.badges
+  return Array.from(issuers.values()).flatMap((issuerBadges) =>
+    issuerBadges
       .map((badge, index) => ({ badge, index }))
       .sort((a, b) => {
         const aDate = a.badge.issuedAt ? Date.parse(a.badge.issuedAt) : null;
@@ -34,7 +33,7 @@ export function groupBadgesByIssuer(badges: CredlyBadge[]) {
         return bDate - aDate || a.index - b.index;
       })
       .map(({ badge }) => badge),
-  }));
+  );
 }
 
 export function isRecord(value: unknown): value is Record<string, unknown> {

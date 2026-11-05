@@ -2,7 +2,7 @@
 
 A lightweight React + TypeScript component for displaying public Credly badges.
 Supports React 17, 18.2, and 19, with horizontal or vertical layouts and optional
-grouping by issuer. Badge images link to their Credly verification pages.
+sorting by issuer. Badge images link to their Credly verification pages.
 
 ## Setup
 
@@ -32,18 +32,19 @@ component.
 | ----------- | -------------------------------------------------------- | ------------------------ |
 | `username`  | Credly profile username (required).                      | -                        |
 | `direction` | `"horizontal"` or `"vertical"`.                          | `"horizontal"`           |
-| `groupBy`   | Set to `"issuer"` to group badges under issuer headings. | No grouping              |
+| `sortBy`    | Set to `"issuer"` to place badges from the same issuer together. | Endpoint order           |
 | `endpoint`  | URL of a compatible proxy, if self-hosting.              | Hosted Cloudflare Worker |
 | `className` | CSS class for the outer container.                       | -                        |
 | `style`     | Inline styles for the outer container.                   | -                        |
 
 ```tsx
-<CredlyBadges username='ahamed-safnaj' direction='vertical' groupBy='issuer' />
+<CredlyBadges username='ahamed-safnaj' direction='vertical' sortBy='issuer' />
 ```
 
-Without grouping, badges retain the endpoint's order. Issuer groups follow their
-first appearance in the response; badges within each group are sorted newest
-first, with undated badges last. Missing issuers appear under "Unknown issuer".
+Without `sortBy`, badges retain the endpoint's order. With `sortBy="issuer"`,
+badges remain in one flat list without headings. Issuers follow their first
+appearance in the response, with badges from each issuer sorted newest first
+and undated badges last. Badges without issuer metadata are kept together too.
 
 ## How the proxy works
 
@@ -73,9 +74,33 @@ npm run build
 ```
 
 Use [Conventional Commits](https://www.conventionalcommits.org/), such as
-`feat: group badges by issuer`, `fix: handle empty responses`, or
+`feat: sort badges by issuer`, `fix: handle empty responses`, or
 `docs: update setup instructions`. Commit messages and PR titles are checked
 in CI.
+
+### Testing in a local React app
+
+In the library directory, create an installable tarball:
+
+```sh
+npm pack
+```
+
+This runs typechecking, linting, and the build before creating
+`react-credly-badges-0.1.0.tgz` (the filename follows the package version).
+Use `npm pack`, not `npm run pack`; there is no `pack` script.
+
+In your React app directory, install the tarball using its full or relative path:
+
+```sh
+npm install /path/to/react-credly-badges/react-credly-badges-0.1.0.tgz
+```
+
+Import and render the component as shown above, then start your app's development
+server (for example, `npm run dev`). After changing the library, run `npm pack`
+again, reinstall the tarball in the app, and restart the development server.
+The tarball contains the built library, not the proxy; the hosted Worker is
+still used unless you provide `endpoint`.
 
 ## Releases
 

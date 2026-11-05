@@ -1,13 +1,13 @@
 import React, { useEffect } from "react";
 import type { CSSProperties } from "react";
-import { groupBadgesByIssuer, parseBadges } from "../shared/badges";
+import { parseBadges, sortBadgesByIssuer } from "../shared/badges";
 import type { CredlyBadge } from "../shared/badges";
 import { BadgeItem } from "./BadgeItem";
 
 export interface CredlyBadgesProps {
   username: string;
   direction?: "horizontal" | "vertical";
-  groupBy?: "issuer";
+  sortBy?: "issuer";
   endpoint?: string;
   className?: string;
   style?: CSSProperties;
@@ -21,7 +21,7 @@ type BadgeState =
 export function CredlyBadges({
   username,
   direction = "horizontal",
-  groupBy,
+  sortBy,
   endpoint = "https://react-credly-badges.safnaj99.workers.dev/",
   className,
   style,
@@ -84,9 +84,11 @@ export function CredlyBadges({
   // Hide results from the previous profile before the next effect runs.
   const current: BadgeState =
     state.key === key ? state : { key, status: "loading" };
-  const groupedBadges =
-    current.status === "success" && groupBy === "issuer"
-      ? groupBadgesByIssuer(current.badges)
+  const badges =
+    current.status === "success"
+      ? sortBy === "issuer"
+        ? sortBadgesByIssuer(current.badges)
+        : current.badges
       : [];
 
   return (
@@ -111,32 +113,9 @@ export function CredlyBadges({
               padding: 0,
             }}
           >
-            {groupBy === "issuer"
-              ? groupedBadges.map(({ issuer, badges }) => (
-                  <li key={issuer}>
-                    <h2>{issuer}</h2>
-                    <ul
-                      aria-label={`Credly badges from ${issuer}`}
-                      style={{
-                        display: "flex",
-                        flexDirection:
-                          direction === "vertical" ? "column" : "row",
-                        flexWrap: direction === "vertical" ? "nowrap" : "wrap",
-                        gap: "1rem",
-                        listStyle: "none",
-                        margin: 0,
-                        padding: 0,
-                      }}
-                    >
-                      {badges.map((badge) => (
-                        <BadgeItem key={badge.id} badge={badge} />
-                      ))}
-                    </ul>
-                  </li>
-                ))
-              : current.badges.map((badge) => (
-                  <BadgeItem key={badge.id} badge={badge} />
-                ))}
+            {badges.map((badge) => (
+              <BadgeItem key={badge.id} badge={badge} />
+            ))}
           </ul>
         ))}
     </div>
