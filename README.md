@@ -28,14 +28,16 @@ component.
 
 ### Options
 
-| Prop        | Description                                              | Default                  |
-| ----------- | -------------------------------------------------------- | ------------------------ |
-| `username`  | Credly profile username (required).                      | -                        |
-| `direction` | `"horizontal"` or `"vertical"`.                          | `"horizontal"`           |
+| Prop        | Description                                                      | Default                  |
+| ----------- | ---------------------------------------------------------------- | ------------------------ |
+| `username`  | Credly profile username (required).                              | -                        |
+| `direction` | `"horizontal"` or `"vertical"`.                                  | `"horizontal"`           |
 | `sortBy`    | Set to `"issuer"` to place badges from the same issuer together. | Endpoint order           |
-| `endpoint`  | URL of a compatible proxy, if self-hosting.              | Hosted Cloudflare Worker |
-| `className` | CSS class for the outer container.                       | -                        |
-| `style`     | Inline styles for the outer container.                   | -                        |
+| `endpoint`  | URL of a compatible proxy, if self-hosting.                      | Hosted Cloudflare Worker |
+| `className` | CSS class for the outer container.                               | -                        |
+| `style`     | Inline styles for the outer container.                           | -                        |
+
+### Usage
 
 ```tsx
 <CredlyBadges username='ahamed-safnaj' direction='vertical' sortBy='issuer' />
@@ -77,30 +79,6 @@ Use [Conventional Commits](https://www.conventionalcommits.org/), such as
 `feat: sort badges by issuer`, `fix: handle empty responses`, or
 `docs: update setup instructions`. Commit messages and PR titles are checked
 in CI.
-
-### Testing in a local React app
-
-In the library directory, create an installable tarball:
-
-```sh
-npm pack
-```
-
-This runs typechecking, linting, and the build before creating
-`react-credly-badges-0.1.0.tgz` (the filename follows the package version).
-Use `npm pack`, not `npm run pack`; there is no `pack` script.
-
-In your React app directory, install the tarball using its full or relative path:
-
-```sh
-npm install /path/to/react-credly-badges/react-credly-badges-0.1.0.tgz
-```
-
-Import and render the component as shown above, then start your app's development
-server (for example, `npm run dev`). After changing the library, run `npm pack`
-again, reinstall the tarball in the app, and restart the development server.
-The tarball contains the built library, not the proxy; the hosted Worker is
-still used unless you provide `endpoint`.
 
 ## Releases
 
